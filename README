@@ -1,0 +1,10 @@
+-----------------------------------------------------------------------------
+  mint  =  <M>ultiIndex-powered-by-<Int>rusive
+                                             very early prototype version!
+
+                               written by k.inaba (http://www.kmonos.net/)
+                           under NYSL 0.9982 (http://www.kmonos.net/nysl/)
+-----------------------------------------------------------------------------
+
+Implementation of Boost.MultiIndex indices using Boost.Intrusive.
+
