@@ -60,8 +60,34 @@ struct intrusive_hook_node
 	void destruct_()  { hook_.~Hook(); }     // 無理矢理初期化(= コンストラクタ呼出)
 
 	// イテレータを boost::indirect_iterator でお手軽実装するための補助関数
-	const typename Super::value_type& operator*() const { return Super::value(); }
+	const typename Super::value_type& operator*() const { return this->value(); }
+
+	// boost::intrusive::xxx_set に突っ込むための比較関数オブジェクト
+	template<typename Comp>
+	struct comparator
+	{
+		Comp cmp;
+		comparator(const Comp& cmp = Comp()) : cmp(cmp) {}
+
+		bool operator()(const intrusive_hook_node& lhs, const intrusive_hook_node& rhs) const
+		{
+			return cmp(lhs.value(), rhs.value());
+		}
+
+		bool operator()(const intrusive_hook_node& lhs, const typename Super::value_type& v) const
+		{
+			return cmp(lhs.value(), v);
+		}
+
+		bool operator()(const typename Super::value_type& v, const intrusive_hook_node& rhs) const
+		{
+			return cmp(v, rhs.value());
+		}
+	};
 };
+
+
+
 
 }}     // end of namespace
 #endif // include guard

@@ -1,24 +1,21 @@
+#include <boost/test/minimal.hpp>
+
 #include "mint/list.hpp"
 #include "mint/splay.hpp"
 
 
-
 #include <iostream>
 #include <string>
+#include <algorithm>
+#include <typeinfo>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/foreach.hpp>
-#include <typeinfo>
-#include <boost/test/minimal.hpp>
-
 
 using namespace std;
 using namespace boost;
 using namespace boost::multi_index;
-using namespace boost::multi_index::detail;
-
-
 
 
 
@@ -28,60 +25,68 @@ int test_main( int argc, char* argv[] )
 {
 	typedef multi_index_container<string,
 	   indexed_by<
-	     sequenced<>,
-	     ordered_non_unique< identity<string> >
-         ,mint::list<>
+         mint::list<>
+         ,mint::splay< std::less<string> >
 	> > container;
 
-	// まず、１つめに指定したアクセス手段（sequenced<>）を持つコンテナとして普通に使える
+
+
 	container c;
 	c.push_back("This");
+	BOOST_CHECK( c.size() == 1 );
 	c.push_back("Is");
+	BOOST_CHECK( c.size() == 2 );
 	c.push_back("A");
+	BOOST_CHECK( c.size() == 3 );
 	c.push_back("Pen");
+	BOOST_CHECK( c.size() == 4 );
 	c.push_back("That");
+	BOOST_CHECK( c.size() == 5 );
 	c.push_back("Is");
+	BOOST_CHECK( c.size() == 5 );
 	c.push_back("Also");
+	BOOST_CHECK( c.size() == 6 );
 	c.push_back("A");
+	BOOST_CHECK( c.size() == 6 );
 	c.push_back("Pen");
-container d = c;
-	container::nth_index<2>::type& c2 = d.get<2>(); //←これがまさにmy_index型
-	cout << "c2: ";
-	BOOST_FOREACH( const string& s, c2 )
-		cout << s << ' ';
-	cout << endl;
-	c2.push_back("This");
-	c2.push_back("Is");
-	c2.push_back("A");
-	c2.push_back("Pen");
-	c2.push_back("That");
-	c2.push_back("Is");
-	c2.push_back("Also");
-	c2.push_back("A");
-	c2.push_back("Penny");
+	BOOST_CHECK( c.size() == 6 );
 
-	cout << "c0: ";
-	BOOST_FOREACH( const string& s, d )
-		cout << s << ' ';
-	cout << endl;
+	container d = c;
+	c.clear();
+	BOOST_CHECK( c.size() == 0 );
 
-	// 別のindex（ordered_non_unique...）でアクセスしたい場合は、get<番号>
-	container::nth_index<1>::type& c1 = c.get<1>();
-	cout << "c1: ";
-	BOOST_FOREACH( const string& s, c1 )
-		cout << s << ' ';
-	cout << endl;
+	c.swap(d);
+	BOOST_CHECK( d.size() == 0 );
+	BOOST_CHECK( c.size() == 6 );
 
-	// set風に使用（O(logN)で実行される）
-	cout << c1.count("Pen") << endl;
+	container::nth_index<1>::type& c2 = c.get<1>();
+	BOOST_CHECK( c2.front() == "A" );
+	BOOST_CHECK( c2.back() == "This" );
 
-	// set風に使用（O(logN)で実行される）
-	c1.erase("Is");
+	d = c;
 
-	// あるindexから実行した操作は、別のindexにも反映されてる
-	BOOST_FOREACH( const string& s, c )
-		cout << s << ' ';
-	cout << endl;
+	c2.erase("Is");
+	BOOST_CHECK( c.size() == 5 );
+	BOOST_CHECK( c2.size() == 5 );
+	BOOST_CHECK( d.size() == 6 );
+	BOOST_CHECK( d.get<1>().size() == 6 );
 
+
+	string data[] = {"This", "A", "Pen", "That", "Also"};
+	BOOST_CHECK( std::equal(data+0, data+5, c.begin()) );
+	BOOST_CHECK( std::equal(data+0, data+5, c.get<0>().begin()) );
+	BOOST_CHECK( !std::equal(data+0, data+5, d.begin()) );
+	sort(data+0, data+5);
+	BOOST_CHECK( std::equal(data+0, data+5, c.get<1>().begin()) );
+
+	container::iterator it =
+		get<0>(c).iterator_to( *get<1>(c).find("Pen") );
+	BOOST_CHECK( *it == "Pen" );
+	++it;
+	BOOST_CHECK( *it == "That" );
+	--it; --it; --it;
+	BOOST_CHECK( *it == "This" );
+
+	container::nth_index<1>::type::iterator jt = get<1>(c).iterator_to( *it );
 	return 0;
 }

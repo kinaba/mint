@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "node.hpp"
 #include "splay_index.hpp"
+#include <functional>
 #include <boost/intrusive/splay_set_hook.hpp>
 
 //---------------------------------------------------------------------------
@@ -12,7 +13,8 @@
 
 namespace mint {
 
-template< typename TagList = boost::multi_index::tag<> >
+template< typename Compare, // とりあえず手抜き。本当はKeyExtractor使えるようにしたい。あとコンストラクタ引数…
+          typename TagList=boost::multi_index::tag<> >
 struct splay
 {
 	// multi_index_container を使うときのインデックス指定
@@ -44,7 +46,7 @@ struct splay
 	struct index_class
 	{
 		typedef detail::splay_index<
-		            SuperMeta, typename TagList::type
+		            Compare, SuperMeta, typename TagList::type
 		        > type;
 	};
 };
