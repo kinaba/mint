@@ -1,11 +1,11 @@
-#ifndef KMONOS_NET_MINT_SPLAY_INDEX_HPP
-#define KMONOS_NET_MINT_SPLAY_INDEX_HPP
+#ifndef KMONOS_NET_MINT_SG_INDEX_HPP
+#define KMONOS_NET_MINT_SG_INDEX_HPP
 
 #include "common.hpp"
 #include "node.hpp"
 #include <algorithm>
-#include <boost/intrusive/splay_set.hpp>
-#include <boost/intrusive/splay_set_hook.hpp>
+#include <boost/intrusive/sg_set.hpp>
+#include <boost/intrusive/bs_set_hook.hpp>
 
 //---------------------------------------------------------------------------
 // MultiIndex 用 "インデックス" の実装例
@@ -14,7 +14,7 @@
 namespace mint { namespace detail {
 
 template<typename Compare, typename SuperMeta, typename TagList>
-class splay_index
+class sg_index
 	: protected SuperMeta::type
 {
 	// 例えばインデックス３個指定したコンテナなら
@@ -44,21 +44,21 @@ class splay_index
 
 
 	// 以下のコメントで
-	//   [Impl]     は、今回の splay_set 用インデックスのための実装詳細
+	//   [Impl]     は、今回の sg_set 用インデックスのための実装詳細
 	//   [Custom]   は、実装したいインデックスに合わせて色々変えて使う関数/型定義
 	//   [Required] は、他のインデックスからそのままコピペで使える関数/型定義
 	//                  本当はちゃんとライブラリ化した方がいい
 
 private:
 	// [Impl] SuperMeta::type は頻繁に使うので typedef しておきます。
-	typedef splay_index              self;
+	typedef sg_index              self;
 	typedef typename SuperMeta::type super;
 
 protected:
 	// [Custom]
 	//    このインデックスで使うノード型を node_type と typedef
 	typedef intrusive_hook_node<
-		boost::intrusive::splay_set_member_hook<>, typename super::node_type
+		boost::intrusive::bs_set_member_hook<>, typename super::node_type
 	> node_type;
 
 public:
@@ -70,11 +70,11 @@ public:
 
 private:
 	// [Impl]
-	//    intrusive の splay_set を使った内部実装
+	//    intrusive の sg_set を使った内部実装
 
-	typedef boost::intrusive::splay_set<node_type,
+	typedef boost::intrusive::sg_set<node_type,
 		boost::intrusive::member_hook<node_type,
-			boost::intrusive::splay_set_member_hook<>, &node_type::hook_>,
+			boost::intrusive::bs_set_member_hook<>, &node_type::hook_>,
 		boost::intrusive::compare< typename node_type::template comparator<Compare> >
 	> impl_type;
 
@@ -121,7 +121,6 @@ public:
 	typedef typename boost::reverse_iterator<const_iterator> const_reverse_iterator;
 
 	// [Required] multi_index が使う型定義
-	//  タグは tag_list というメンバ型で置いておけば multi_index::get が勝手に拾ってくれる
 	typedef TagList                                          tag_list;
 
 protected:
@@ -140,10 +139,10 @@ protected:
 public:
 	// [Custom]
 	//   コンストラクタとデストラクタとコピー等
-	splay_index( const splay_index& rhs ) : super(rhs) {} // あとで copy_ が呼ばれる
-	splay_index( const ctor_args_list& args_list, const allocator_type& al )
+	sg_index( const sg_index& rhs ) : super(rhs) {} // あとで copy_ が呼ばれる
+	sg_index( const ctor_args_list& args_list, const allocator_type& al )
 		: super( args_list.get_tail(), al ) {}
-	~splay_index() {}
+	~sg_index() {}
 	self& operator=( self& rhs ) { this->final() = rhs.final(); return *this; }
 	allocator_type get_allocator() const { return this->final().get_allocator(); }
 
@@ -329,7 +328,7 @@ public:
 		super::clear_();
 	}
 
-	void swap_( splay_index& x )
+	void swap_( sg_index& x )
 	{
 		// [Custom]
 		//   スワップ
@@ -415,7 +414,7 @@ public:
 	//    ここから、インデックスの提供するいろいろなメンバ関数の実装
 	//------------------------------------------------------------------------------------
 
-	void  swap(splay_index& x)    {this->final_swap_(x.final());}
+	void  swap(sg_index& x)    {this->final_swap_(x.final());}
 	void  clear()                 {this->final_clear_();}
 	const_reference front() const {return *begin();}
 	const_reference back()  const {return *--end();}
@@ -504,7 +503,7 @@ public:
 	{
 		return impl_.count(x, impl_.value_comp());
 	}
-	iterator find(const value_type& x)
+	iterator find(const value_type& x) const
 	{
 		return impl_.find(x, impl_.value_comp());
 	}
@@ -545,7 +544,7 @@ public:
 };
 
 template<typename C, typename S, typename T>
-void swap( splay_index<C,S,T>& lhs, splay_index<C,S,T>& rhs )
+void swap( sg_index<C,S,T>& lhs, sg_index<C,S,T>& rhs )
 {
 	lhs.swap(rhs);
 }

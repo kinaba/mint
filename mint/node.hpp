@@ -7,7 +7,7 @@
 
 namespace mint { namespace detail {
 
-template<typename Hook, typename Super>
+template<typename Hook, typename Super, typename Priority = void>
 struct intrusive_hook_node
 	: public Super
 {
@@ -84,6 +84,12 @@ struct intrusive_hook_node
 			return cmp(v, rhs.value());
 		}
 	};
+
+	// treap —p
+	friend bool priority_order(const intrusive_hook_node& a, const intrusive_hook_node& b)
+	{
+		return Priority()(a.value(), b.value());
+	}
 };
 
 

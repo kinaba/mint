@@ -2,6 +2,9 @@
 
 #include "mint/list.hpp"
 #include "mint/splay.hpp"
+#include "mint/sg.hpp"
+#include "mint/avl.hpp"
+#include "mint/treap.hpp"
 
 
 #include <iostream>
@@ -18,6 +21,10 @@ using namespace boost;
 using namespace boost::multi_index;
 
 
+struct seq {};
+struct ord {};
+
+
 
 
 
@@ -25,8 +32,8 @@ int test_main( int argc, char* argv[] )
 {
 	typedef multi_index_container<string,
 	   indexed_by<
-         mint::list<>
-         ,mint::splay< std::less<string> >
+         mint::list< tag<seq> >
+         ,mint::splay< std::less<string>, tag<ord> >
 	> > container;
 
 
@@ -64,12 +71,13 @@ int test_main( int argc, char* argv[] )
 	BOOST_CHECK( c2.back() == "This" );
 
 	d = c;
+	container::nth_index<1>::type& d2 = d.get<1>();
 
 	c2.erase("Is");
 	BOOST_CHECK( c.size() == 5 );
 	BOOST_CHECK( c2.size() == 5 );
 	BOOST_CHECK( d.size() == 6 );
-	BOOST_CHECK( d.get<1>().size() == 6 );
+	BOOST_CHECK( d2.size() == 6 );
 
 
 	string data[] = {"This", "A", "Pen", "That", "Also"};
@@ -86,6 +94,20 @@ int test_main( int argc, char* argv[] )
 	BOOST_CHECK( *it == "That" );
 	--it; --it; --it;
 	BOOST_CHECK( *it == "This" );
+
+	d2.insert("HelloWorld!");
+	BOOST_CHECK( d.back() == "HelloWorld!" );
+	BOOST_CHECK( d2.find("HelloWorld!") != d2.end() );
+	BOOST_CHECK( c2.find("HelloWorld!") == c2.end() );
+	BOOST_CHECK( *c2.upper_bound("HelloWorld!") == "Pen" );
+	BOOST_CHECK( *d2.lower_bound("HelloWorld!") == "HelloWorld!" );
+	BOOST_CHECK( *c2.upper_bound("HelloWorld!") == "Pen" );
+	BOOST_CHECK( *d2.upper_bound("HelloWorld!") == "Is" );
+
+	BOOST_CHECK( &d.get<0>() == &d.get<seq>() );
+	BOOST_CHECK( &d.get<1>() == &d.get<ord>() );
+	BOOST_CHECK( d.get<1>() == d.get<ord>() );
+	BOOST_CHECK( c.get<ord>() >= d.get<ord>() );
 
 	container::nth_index<1>::type::iterator jt = get<1>(c).iterator_to( *it );
 	return 0;
