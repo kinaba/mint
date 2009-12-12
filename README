@@ -8,3 +8,4 @@
 
 Implementation of Boost.MultiIndex indices using Boost.Intrusive.
 
+BE CAREFUL! THIS IS A VERY EARLY PROTOTYPE PRE-ALPHA VERSION.
